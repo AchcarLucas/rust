@@ -1401,10 +1401,10 @@ fn internalize_symbols<'a, 'tcx>(sess: &Session,
         // are referenced via a declaration in some other codegen unit.
         for ccx in ccxs.iter_need_trans() {
             for val in iter_globals(ccx.llmod()).chain(iter_functions(ccx.llmod())) {
-                let linkage = llvm::LLVMGetLinkage(val);
+                let linkage = llvm::LLVMRustGetLinkage(val);
                 // We only care about external declarations (not definitions)
                 // and available_externally definitions.
-                let is_available_externally = linkage == llvm::AvailableExternallyLinkage as c_uint;
+                let is_available_externally = linkage == llvm::AvailableExternallyLinkage;
                 let is_decl = llvm::LLVMIsDeclaration(val) != 0;
 
                 if is_decl || is_available_externally {
@@ -1446,11 +1446,11 @@ fn internalize_symbols<'a, 'tcx>(sess: &Session,
         // then give it internal linkage.
         for ccx in ccxs.iter_need_trans() {
             for val in iter_globals(ccx.llmod()).chain(iter_functions(ccx.llmod())) {
-                let linkage = llvm::LLVMGetLinkage(val);
+                let linkage = llvm::LLVMRustGetLinkage(val);
 
-                let is_externally_visible = (linkage == llvm::ExternalLinkage as c_uint) ||
-                                            (linkage == llvm::LinkOnceODRLinkage as c_uint) ||
-                                            (linkage == llvm::WeakODRLinkage as c_uint);
+                let is_externally_visible = (linkage == llvm::Linkage::ExternalLinkage) ||
+                                            (linkage == llvm::Linkage::LinkOnceODRLinkage) ||
+                                            (linkage == llvm::Linkage::WeakODRLinkage);
                 let is_definition = llvm::LLVMIsDeclaration(val) == 0;
 
                 // If this is a definition (as opposed to just a declaration)
@@ -1465,7 +1465,7 @@ fn internalize_symbols<'a, 'tcx>(sess: &Session,
                     let has_fixed_linkage = linkage_fixed_explicitly.contains(&name_cow);
 
                     if !is_referenced_somewhere && !is_reachable && !has_fixed_linkage {
-                        llvm::LLVMSetLinkage(val, llvm::InternalLinkage);
+                        llvm::LLVMRustSetLinkage(val, llvm::Linkage::InternalLinkage);
                         llvm::LLVMSetDLLStorageClass(val,
                                                      llvm::DLLStorageClass::Default);
                         llvm::UnsetComdat(val);
@@ -1495,8 +1495,8 @@ fn create_imps(cx: &CrateContextList) {
         for ccx in cx.iter_need_trans() {
             let exported: Vec<_> = iter_globals(ccx.llmod())
                                        .filter(|&val| {
-                                           llvm::LLVMGetLinkage(val) ==
-                                           llvm::ExternalLinkage as c_uint &&
+                                           llvm::LLVMRustGetLinkage(val) ==
+                                           llvm::Linkage::ExternalLinkage &&
                                            llvm::LLVMIsDeclaration(val) == 0
                                        })
                                        .collect();
@@ -1512,7 +1512,7 @@ fn create_imps(cx: &CrateContextList) {
                                               imp_name.as_ptr() as *const _);
                 let init = llvm::LLVMConstBitCast(val, i8p_ty.to_ref());
                 llvm::LLVMSetInitializer(imp, init);
-                llvm::LLVMSetLinkage(imp, llvm::ExternalLinkage);
+                llvm::LLVMRustSetLinkage(imp, llvm::Linkage::ExternalLinkage);
             }
         }
     }
