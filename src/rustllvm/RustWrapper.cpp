@@ -1232,3 +1232,72 @@ extern "C" void LLVMRustUnsetComdat(LLVMValueRef V) {
     GlobalObject *GV = unwrap<GlobalObject>(V);
     GV->setComdat(nullptr);
 }
+
+extern "C" unsigned LLVMRustGetLinkage(LLVMValueRef V) {
+    switch (LLVMGetLinkage(V)) {
+        case LLVMExternalLinkage:
+            return 0;
+        case LLVMAvailableExternallyLinkage:
+            return 1;
+        case LLVMLinkOnceAnyLinkage:
+            return 2;
+        case LLVMLinkOnceODRLinkage:
+            return 3;
+        case LLVMWeakAnyLinkage:
+            return 4;
+        case LLVMWeakODRLinkage:
+            return 5;
+        case LLVMAppendingLinkage:
+            return 6;
+        case LLVMInternalLinkage:
+            return 7;
+        case LLVMPrivateLinkage:
+            return 8;
+        case LLVMExternalWeakLinkage:
+            return 9;
+        case LLVMCommonLinkage:
+            return 10;
+        default:
+            llvm_unreachable("Invalid RustLinkage value!");
+    }
+}
+
+extern "C" void LLVMRustSetLinkage(LLVMValueRef V, unsigned RustLinkage) {
+    switch (RustLinkage) {
+        case 0:
+            LLVMSetLinkage(V, LLVMExternalLinkage);
+            break;
+        case 1:
+            LLVMSetLinkage(V, LLVMAvailableExternallyLinkage);
+            break;
+        case 2:
+            LLVMSetLinkage(V, LLVMLinkOnceAnyLinkage);
+            break;
+        case 3:
+            LLVMSetLinkage(V, LLVMLinkOnceODRLinkage);
+            break;
+        case 4:
+            LLVMSetLinkage(V, LLVMWeakAnyLinkage);
+            break;
+        case 5:
+            LLVMSetLinkage(V, LLVMWeakODRLinkage);
+            break;
+        case 6:
+            LLVMSetLinkage(V, LLVMAppendingLinkage);
+            break;
+        case 7:
+            LLVMSetLinkage(V, LLVMInternalLinkage);
+            break;
+        case 8:
+            LLVMSetLinkage(V, LLVMPrivateLinkage);
+            break;
+        case 9:
+            LLVMSetLinkage(V, LLVMExternalWeakLinkage);
+            break;
+        case 10:
+            LLVMSetLinkage(V, LLVMCommonLinkage);
+            break;
+        default:
+            llvm_unreachable("Invalid RustLinkage value!");
+    }
+}
